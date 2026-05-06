@@ -26,3 +26,9 @@ Ho implementato la gestione base della sicurezza multi-utente di Linux, requisit
 * **Privilege Escalation:** Passaggio all'utente amministratore (root) tramite il comando `su -` per caricare l'ambiente corretto.
 * **Creazione Utenti:** Provisioning di un nuovo utente standard con directory home associata tramite `useradd -m` e assegnazione sicura delle credenziali con `passwd`.
 * **Manipolazione Permessi (Modalità Ottale):** Applicazione della matrice dei permessi (UGO/RWX). Ho utilizzato `touch` per creare un file di test e il comando `chmod 750` per assegnare permessi di lettura/scrittura/esecuzione al proprietario, lettura/esecuzione al gruppo, e nessun accesso per gli altri utenti (equivalente alla stringa `-rwxr-x---`).
+
+### Manipolazione del Testo e Stream Redirection
+Nella fase finale della sessione, mi sono concentrato sugli strumenti di analisi dei log e sulla gestione degli stream di I/O, competenze essenziali per il troubleshooting:
+* **Analisi dei file:** Utilizzo di `cat` per output immediati e `less` come paginatore per l'ispezione di file lunghi (es. file di configurazione in `/etc`).
+* **Filtraggio:** Ricerca di pattern specifici e identificazione dell'UID 0 tramite `grep` applicato al file `/etc/passwd`.
+* **I/O Streams e Piping:** Salvataggio permanente dell'output tramite l'operatore di ridirezione `>` e concatenazione dei comandi tramite pipe `|` (es. `ls -la | less`) per gestire flussi di dati complessi.
