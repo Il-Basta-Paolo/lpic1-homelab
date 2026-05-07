@@ -32,3 +32,38 @@ Nella fase finale della sessione, mi sono concentrato sugli strumenti di analisi
 * **Analisi dei file:** Utilizzo di `cat` per output immediati e `less` come paginatore per l'ispezione di file lunghi (es. file di configurazione in `/etc`).
 * **Filtraggio:** Ricerca di pattern specifici e identificazione dell'UID 0 tramite `grep` applicato al file `/etc/passwd`.
 * **I/O Streams e Piping:** Salvataggio permanente dell'output tramite l'operatore di ridirezione `>`(sovrascrive il file) e `>>`(scrive in fondo, fa "append") e concatenazione dei comandi tramite pipe `|` (es. `ls -la | less`) per gestire flussi di dati complessi.
+
+## Giorno 2: Gestione Pacchetti, Archiviazione, Processi e Bash Scripting Difensivo
+
+Oggi ho ampliato le mie competenze nell'amministrazione di sistema, passando dai comandi base alla gestione avanzata del software, delle risorse e dell'automazione tramite script professionali.
+
+### Gestione Pacchetti (APT) e Modularità
+Ho analizzato i meccanismi di aggiornamento nei sistemi Debian-based, distinguendo tra la sincronizzazione dei metadati e l'installazione dei binari:
+* **Sincronizzazione Indici:** Utilizzo di `apt update` per scaricare i metadati più recenti dai repository (file come `Packages` e `InRelease`) aggiornando il database locale senza alterare il software installato.
+* **Aggiornamento Binari:** Utilizzo di `apt upgrade` per risolvere le dipendenze, scaricare e installare effettivamente i pacchetti `.deb` aggiornati basandosi sugli indici locali.
+* **Modularità dei Repository:** Analisi della differenza tra il file monolitico `/etc/apt/sources.list` e l'approccio modulare della directory `/etc/apt/sources.list.d/`, essenziale per aggiungere sorgenti di terze parti in modo sicuro e automatizzabile.
+* **Automazione delle Installazioni:** Installazione non interattiva di tool di monitoraggio e navigazione tramite l'opzione "yes", utilizzando il comando `sudo apt-get install htop tree -y`.
+
+### Archiviazione e Compressione dei Dati
+Ho implementato un backup completo della directory di configurazione di sistema (`/etc`), garantendo la conservazione dei permessi e prevenendo sovrascritture accidentali durante il ripristino:
+* **Tarball e Gzip:** Comprensione della differenza sostanziale tra `tar` (creazione dell'archivio monolitico preservando permessi, proprietari e gerarchia FHS) e `gzip` (compressione dello stream di dati). Ho combinato i due strumenti in una singola operazione con il comando `sudo tar -czf backup_config.tar.gz /etc`.
+* **Sicurezza dei Percorsi Assoluti:** Osservazione del comportamento protettivo di `tar`, che rimuove automaticamente lo slash iniziale (`/`) dai percorsi assoluti (es. da `/etc/passwd` a `etc/passwd`). Questo trasforma i percorsi in relativi, proteggendo la radice del sistema host in fase di scompattazione.
+
+### Gestione e Monitoraggio dei Processi
+Ho consolidato le tecniche di *process control* e la diagnostica delle risorse di sistema:
+* **Identificazione (PID) e Memoria (RSS):** Analisi del *Process IDentifier* (con focus sul PID 1, l'init system vitale per il Kernel) e del *Resident Set Size*, ovvero la porzione di RAM fisica non-swappata attualmente allocata a un processo.
+* **Gestione dei Segnali (Signals):** Differenziazione tra `SIGTERM` (15) per inviare una richiesta di chiusura *graceful* (pulita) e `SIGKILL` (9) per un *hard kill* sommario eseguito dal Kernel. Ho inoltre analizzato la natura dei processi "Zombie", impossibili da terminare direttamente poiché già "morti" in attesa di essere letti dal processo padre.
+* **Job Control:** Esecuzione di processi in background (non bloccanti per la shell) aggiungendo l'operatore `&` a fine comando (es. `sleep 1000 &`) e loro ripristino in foreground tramite il comando `fg`.
+
+### Auditing di Sicurezza e I/O Redirection
+Ho strutturato un comando di auditing per scovare file con permessi critici, gestendo in modo esplicito i flussi standard di Unix:
+* **Ricerca basata sui Metadati:** Utilizzo di `find` in contrapposizione a `grep` (che analizza il testo interno) per ispezionare l'albero del filesystem partendo dalla root (`/`). Ho applicato il filtro `-perm 777` per identificare file con permessi totali (lettura, scrittura ed esecuzione globale).
+* **Isolamento dello Standard Error:** Gestione avanzata dei flussi di Input/Output. Per non inquinare i risultati validi (*Standard Output*, canale 1), ho reindirizzato esplicitamente gli errori "Permission denied" (*Standard Error*, canale 2) verso il dispositivo nullo di Linux, utilizzando `2> /dev/null`.
+
+### Scripting Bash Difensivo e Sicurezza dell'Esecuzione
+Ho convertito il comando singolo di audit in uno script bash professionale, robusto e riutilizzabile:
+* **Shebang:** Utilizzo della direttiva `#!/bin/bash` alla riga 1 per indicare esplicitamente al Kernel l'interprete da utilizzare.
+* **Variabile PATH e Sicurezza:** Comprensione del motivo per cui si usa `./` per eseguire script locali. La directory corrente (`.`) è intenzionalmente esclusa dalla variabile d'ambiente `$PATH` per prevenire l'esecuzione accidentale di script malevoli mascherati da comandi legittimi.
+* **Controllo Privilegi (EUID):** Implementazione di un blocco logico di sicurezza basato sulla variabile `$EUID` (*Effective User ID*). Questo garantisce che lo script possa essere eseguito esclusivamente dall'utente root (UID 0), evitando audit parziali e fuorvianti.
+* Caricamento del file dello script creato chiamato audit.sh
+
