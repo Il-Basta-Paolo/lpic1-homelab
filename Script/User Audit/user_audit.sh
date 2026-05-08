@@ -4,7 +4,7 @@
 # Script: user_audit.sh
 # Descrizione: Genera un report degli utenti fisici del sistema con shell interattiva,
 #              escludendo i demoni e gli account di servizio.
-# Autore: Studente di Ingegneria dei Sistemi
+# Autore: Paolo Basta
 # Data: Maggio 2026
 # ==============================================================================
 
