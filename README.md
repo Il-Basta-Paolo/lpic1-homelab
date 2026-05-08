@@ -67,3 +67,34 @@ Ho convertito il comando singolo di audit in uno script bash professionale, robu
 * **Controllo Privilegi (EUID):** Implementazione di un blocco logico di sicurezza basato sulla variabile `$EUID` (*Effective User ID*). Questo garantisce che lo script possa essere eseguito esclusivamente dall'utente root (UID 0), evitando audit parziali e fuorvianti.
 * Caricamento del file dello script creato chiamato audit.sh
 
+## Giorno 3: Architettura di Boot, Manipolazione Flussi e Auditing Dati Strutturati
+
+Oggi ho approfondito il ciclo di vita del sistema operativo Linux e l'uso di strumenti non interattivi per l'analisi e la trasformazione dei dati, competenze chiave per l'automazione della sicurezza.
+
+### Architettura del Processo di Boot
+Ho analizzato la sequenza di transizioni di stato che intercorrono tra l'accensione fisica e il prompt utente:
+* **Hardware Initiation (BIOS/UEFI):** Il firmware esegue il POST e localizza il bootloader nel MBR o nella partizione ESP.
+* **Bootloader (GRUB2) e initrd:** Caricamento in RAM del Kernel compresso (`vmlinuz`) e dell'Initial Ramdisk (`initrd`). Ho appreso che l'`initrd` è significativamente più grande del Kernel poiché contiene un file system temporaneo completo di moduli e driver necessari per montare la root reale (`/`).
+* **Kernel e Init System:** Inizializzazione dell'hardware, smontaggio dell'initrd e generazione del PID 1 (`systemd`), il processo padre responsabile dell'orchestrazione dei servizi nello User Space tramite le *target units*.
+
+### Espressioni Regolari e Filtraggio Chirurgo (Grep)
+Ho abbandonato la ricerca testuale semplice per passare all'estrazione basata su pattern (Regex), essenziale per il parsing dei file di sistema:
+* **Ancoraggi di Riga (`^` e `$`):** Utilizzo dei metacaratteri per vincolare il match. L'ancoraggio di fine riga (`$`) in `grep "/bin/bash$"` garantisce l'isolamento della shell esatta, scartando varianti o directory simili. L'ancoraggio di inizio (`^sys:`) previene l'estrazione di falsi positivi.
+* **Matching Flessibile:** Utilizzo del punto (`.`) come metacarattere per rappresentare un singolo carattere qualsiasi, permettendo la creazione di pattern di ricerca elastici ma precisi.
+
+### Manipolazione dei Flussi in RAM (sed)
+Ho esplorato `sed` (Stream Editor), distinguendolo dagli editor interattivi per la sua capacità di elaborare dati "on the fly":
+* **Pattern Space:** Analisi del funzionamento di `sed`, che manipola i flussi di dati in transito (Standard Input) in un'area di memoria temporanea riga per riga, senza alterare i file fisici (salvo l'uso del flag `-i`).
+* **Estrazione Silenziosa e Flag:** Implementazione del pattern `-n` con il comando `p` per stampare solo le righe che soddisfano determinati criteri di sostituzione o ricerca, riducendo drasticamente il "rumore" negli output di logging.
+
+### Analisi e Parsing di Dati Strutturati (AWK)
+Ho iniziato a utilizzare AWK come motore di reportistica, trattando i file di testo come database tabellari:
+* **Variabili Architetturali:** Gestione del *Field Separator* (`-F`) per file delimitati (es. `:` in `/etc/passwd`) e dell'Output Field Separator (`OFS`) per formattare i risultati tramite la virgola `,` nell'istruzione `print`.
+* **Filtraggio Condizionale e Regex (`~`):** Implementazione di controlli logici sui campi. Ho utilizzato l'operatore di match (`~`) per valutare un campo specifico contro un'espressione regolare (es. `$7 ~ /sh$/` per isolare solo shell interattive valide).
+* **Architettura a Blocchi:** Utilizzo dei blocchi `BEGIN` (setup e header) ed `END` (footer e totali) per incapsulare il main loop di elaborazione in un report leggibile.
+
+### Automazione e Scripting: user_audit.sh
+Ho unito le tecnologie apprese in uno script Bash finalizzato all'auditing automatizzato:
+* **Sviluppo dell'Auditor:** Creazione di uno script che estrae gli utenti fisici reali, ignorando sistematicamente i servizi e i demoni di sistema.
+* **Redirezione e I/O Management:** Utilizzo della redirezione standard (`>`) per dirottare l'output formattato verso un file di report (`user_audit_report.txt`), separando la logica di generazione dalla visualizzazione.
+* **Best Practice di Scripting:** Implementazione di feedback visivi tramite `echo` per l'operatore di sistema.
