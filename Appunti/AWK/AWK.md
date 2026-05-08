@@ -24,3 +24,21 @@ Queste variabili gestiscono l'architettura dei dati e possono essere usate liber
 | :--- | :--- |
 | **`$0`** | L'intero record corrente (la riga completa, non modificata). |
 | **`$1`, `$2`...**| Il campo numero 1, 2, ecc., definito dal separatore `FS`. |
+
+#### 4. Operatori di Confronto e Pattern Matching
+Oltre ai classici operatori matematici, AWK possiede operatori specifici per filtrare i record in base al contenuto dei campi.
+
+| Operatore | Nome Tecnico | Comportamento Sotto il Cofano | Esempio |
+| :--- | :--- | :--- | :--- |
+| **`==`** | Uguaglianza Rigorosa | Verifica se l'intero campo è *esattamente* identico a una determinata stringa o numero. Falsi negativi frequenti se il dato varia leggermente. | `$7 == "/bin/bash"` |
+| **`~`** | RegEx Match | Valuta se il campo rispetta una specifica Espressione Regolare (che in AWK va sempre racchiusa tra due slash `/.../`). | `$7 ~ /sh$/` |
+| **`!~`** | RegEx Mismatch | L'inverso del precedente: valuta se il campo **non** rispetta l'Espressione Regolare fornita. Utile per escludere pattern. | `$1 !~ /^sys/` |
+
+#### 5. Architettura a Blocchi (Flusso di Esecuzione)
+AWK non elabora i dati semplicemente in modo lineare, ma gestisce il ciclo di vita del flusso I/O attraverso tre fasi logiche distinte, permettendo la costruzione di report completi.
+
+| Blocco | Funzione Architetturale | Caso d'Uso Tipico |
+| :--- | :--- | :--- |
+| **`BEGIN {azione}`** | Eseguito **esattamente una volta**, *prima* che AWK legga anche solo un singolo byte del file di input. | Inizializzare variabili (es. contatori), stampare le intestazioni (Header) di una tabella, o definire variabili interne come `FS` e `OFS` da codice. |
+| **`condizione {azione}`** | Il *Main Loop*. Eseguito ciclicamente per **ogni singola riga** del file di input, a patto che la condizione sia valutata come VERA (True). | Estrazione e formattazione dei dati centrali del record corrente (es. `print $1, $3`). |
+| **`END {azione}`** | Eseguito **esattamente una volta**, *dopo* aver processato l'ultima riga del file (o aver ricevuto il segnale di fine file EOF). | Stampare i piè di pagina (Footer) di un report, oppure calcolare e stampare totali e medie raccolte durante il Main Loop. |
